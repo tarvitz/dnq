@@ -1,0 +1,9 @@
+*.iml
+*.sw[po]
+inspections
+src
+bin
+.coverage
+.idea
+go.sum
+resources/server.*

@@ -7,7 +7,7 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
-var Quotes map[string] []*Quote
+var Quotes map[string][]*Quote
 
 type Config struct {
 	Quotes []*Quote `json:"quotes"`
@@ -19,9 +19,10 @@ type Quote struct {
 	Matches []string `json:"matches"`
 }
 
+// ReadQuotes read Duke Nukem's quotes from configuration file.
 func ReadQuotes(filename string) (err error) {
 	var (
-		fd *os.File
+		fd     *os.File
 		config *Config
 	)
 
@@ -37,7 +38,7 @@ func ReadQuotes(filename string) (err error) {
 		return
 	}
 
-	Quotes = make(map[string] []*Quote)
+	Quotes = make(map[string][]*Quote)
 	for _, quote := range config.Quotes {
 		for _, match := range quote.Matches {
 			Quotes[match] = append(Quotes[match], quote)

@@ -3,7 +3,7 @@ package common
 import "fmt"
 
 type Auth struct {
-	Token   string `short:"t" long:"token" required:"true" env:"DNQ_API_TOKEN" description:"bot api token"`
+	Token string `short:"t" long:"token" required:"true" env:"DNQ_API_TOKEN" description:"bot api token"`
 }
 
 // Method returns telegram API method name. Example

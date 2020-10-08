@@ -1,17 +1,16 @@
 package telegram
 
 import (
-	"crypto/rand"
-	"fmt"
 	"strings"
 )
 
 type APIResponse struct {
-	Status bool `json:"status"`
+	Status  bool     `json:"status"`
 	Message *Message `json:"result"`
 }
 
 type From struct {
+	ID           int    `json:"id"`
 	IsBot        bool   `json:"is_bot,omitempty"`
 	FirstName    string `json:"first_name"`
 	LastName     string `json:"last_name,omitempty"`
@@ -21,10 +20,10 @@ type From struct {
 }
 
 type Message struct {
-	ID   int  `json:"message_id"`
+	ID   int   `json:"message_id"`
 	From *From `json:"from"`
 	Chat *From `json:"chat"`
-	// Todo replace with serializable date
+	// todo: replace with serializable date (some other day :)
 	Date int `json:"date"`
 
 	// Optional fields
@@ -38,7 +37,7 @@ type Update struct {
 
 type InlineQuery struct {
 	ID     string `json:"id"`
-	From   From   `json:"from"`
+	From   *From  `json:"from"`
 	Query  string `json:"query"`
 	Offset string `json:"offset"`
 }
@@ -52,11 +51,15 @@ type Voice struct {
 }
 
 type AnswerInline struct {
-	ID      string               `json:"inline_query_id"`
-	Results []AnswerInlineResult `json:"results"`
+	ID      string                `json:"inline_query_id"`
+	Results []*AnswerInlineResult `json:"results"`
 }
 
 type AnswerInlineType string
+
+const (
+	AnswerInlineTypeVoice AnswerInlineType = "voice"
+)
 
 type AnswerInlineResult struct {
 	Type        AnswerInlineType `json:"type"`
@@ -70,7 +73,7 @@ func NewAnswerInline(update *Update) (result *AnswerInline) {
 	result = new(AnswerInline)
 	result.ID = update.InlineQuery.ID
 	for _, quote := range NewInlineQueryResultCachedVoice(update) {
-		result.Results = append(result.Results, *quote)
+		result.Results = append(result.Results, quote)
 	}
 	return result
 }
@@ -84,20 +87,13 @@ func NewInlineQueryResultCachedVoice(update *Update) (results []*AnswerInlineRes
 	}
 	for _, quote := range quotes {
 		result := &AnswerInlineResult{
-			ID: uuid(),
-			Type: "voice",
-			Caption: quote.Caption,
-			Title: quote.Caption,
+			ID:          uuid(),
+			Type:        AnswerInlineTypeVoice,
+			Caption:     quote.Caption,
+			Title:       quote.Caption,
 			VoiceFileId: &quote.ID,
 		}
 		results = append(results, result)
 	}
 	return
-}
-
-func uuid() string {
-	b := make([]byte, 16)
-	_, _ = rand.Read(b)
-	uuid := fmt.Sprintf("%x-%x-%x-%x-%x", b[0:4], b[4:6], b[6:8], b[8:10], b[10:])
-	return uuid
 }

@@ -13,7 +13,7 @@ func Close(target io.Closer) {
 func body(request *http.Request) string {
 	var (
 		content []byte
-		err error
+		err     error
 	)
 
 	defer Close(request.Body)

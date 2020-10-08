@@ -16,7 +16,7 @@ func (service *InlineService) AnswerInlineQuery(update *Update) (err error) {
 
 	request := &APIRequest{
 		Method:    "POST",
-		APIMethod: "answerInlineQuery",
+		APIMethod: AnswerInlineQuery,
 		Body:      buffer,
 	}
 	err = service.client.Call(request, nil)

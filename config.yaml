@@ -1,7 +1,8 @@
 quotes:
 - id: "AwACAgIAAxkDAAMRX3J5RTS6ijieWbCFrX68h8-o4ZoAAg8HAAKguZhLPoXn4iWWE2QbBA"
   caption: "Come get some!"
-  matches: ["come", "get", "some", "come get some"]
+  #: "" for default
+  matches: ["come", "get", "some", "come get some", ""]
 - id: "AwACAgIAAxkDAAMJX2-0Hy9d4Wzj3iTgL6LQokyJThMAAl0KAAKIq4FLr4gocayKwSQbBA"
   caption: "Groovy!"
   matches: ["groovy"]

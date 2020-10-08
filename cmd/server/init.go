@@ -10,7 +10,7 @@ import (
 var (
 	httpServer  *http.Server
 	http2Server = &http2.Server{}
-	cmd *Command
+	cmd         *Command
 )
 
 func init() {

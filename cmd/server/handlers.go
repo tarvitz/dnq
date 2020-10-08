@@ -23,10 +23,10 @@ func Inline() http.HandlerFunc {
 	return inline
 }
 
-func inline (writer http.ResponseWriter, request *http.Request) {
+func inline(writer http.ResponseWriter, request *http.Request) {
 	var (
 		update *telegram.Update
-		err error
+		err    error
 	)
 	writer.WriteHeader(http.StatusOK)
 
@@ -43,12 +43,12 @@ func inline (writer http.ResponseWriter, request *http.Request) {
 }
 
 func Reload() http.HandlerFunc {
-	return func (writer http.ResponseWriter, request *http.Request) {
+	return func(writer http.ResponseWriter, request *http.Request) {
 		err := telegram.ReadQuotes(string(cmd.Config))
 		if err != nil {
 			writer.WriteHeader(400)
 			content, _ := json.Marshal(map[string]string{
-				"ok": "false",
+				"ok":  "false",
 				"err": err.Error(),
 			})
 			_, _ = writer.Write(content)

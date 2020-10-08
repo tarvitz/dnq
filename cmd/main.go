@@ -27,7 +27,7 @@ var (
 	appVersion = "dev"
 
 	// Exit function
-	Exit = func (code int) {
+	Exit = func(code int) {
 		os.Exit(code)
 	}
 )

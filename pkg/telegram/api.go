@@ -19,7 +19,6 @@ type APIRequest struct {
 	APIMethod    MethodType
 	ExpectStatus int
 	Body         io.Reader
-	Query        string
 	ContentType  string
 }
 
@@ -32,12 +31,6 @@ type Client struct {
 
 	// Services
 	Inlines *InlineService
-}
-
-// WithToken sets token for authentication
-func (api *Client) WithToken(token string) *Client {
-	api.token = token
-	return api
 }
 
 // WithURL sets url to send bot api requests to. It's helpful in testing.
@@ -64,28 +57,15 @@ func (api *Client) URL(format string, args ...interface{}) string {
 	return fmt.Sprintf("%s%s%s", api.apiURL, api.token, rightPart)
 }
 
-func (api *Client) request(method, url string, body io.Reader) *http.Request {
-	// error has been omitted by an intention due to
-	// api client should verify a sanity of api urls before constructing a request.
-	request, _ := http.NewRequest(method, url, body)
-	return request
-}
-
-func (api *Client) updateRequest(request *APIRequest, httpRequest *http.Request) *http.Request {
-	if request.Query != "" {
-		httpRequest.URL.RawQuery = request.Query
-	}
-	return httpRequest
-}
-
-// CRUD like implementation
-
 // Call performs an generic http rest api calls.
 func (api *Client) Call(request *APIRequest, in interface{}) (err error) {
-	var response *http.Response
+	var (
+		response    *http.Response
+		httpRequest *http.Request
+	)
 
 	url := api.URL("/%s", request.APIMethod)
-	httpRequest := api.updateRequest(request, api.request(request.Method, url, request.Body))
+	httpRequest, _ = http.NewRequest(request.Method, url, request.Body)
 	httpRequest.Header.Set("Content-Type", orString(request.ContentType, "application/json"))
 
 	response, err = api.httpClient.Do(httpRequest)
@@ -115,8 +95,8 @@ func (api *Client) Call(request *APIRequest, in interface{}) (err error) {
 
 // Retrieve is a basic GET operation for getting object
 // (or in some particular cases, the list of objects)
-func (api *Client) Retrieve(endpoint string, body io.Reader, in interface{}) (err error) {
-	request := &APIRequest{Method: "GET", APIMethod: MethodType(endpoint), Body: body}
+func (api *Client) Retrieve(endpoint string, in interface{}) (err error) {
+	request := &APIRequest{Method: "GET", APIMethod: MethodType(endpoint)}
 	return api.Call(request, &in)
 }
 
@@ -128,9 +108,7 @@ func (api *Client) Upload(method MethodType, values map[string]io.Reader) (
 		body        io.Reader
 		contentType string
 	)
-	if body, contentType, err = makeMultipartFormDataPayload(values); err != nil {
-		return
-	}
+	body, contentType = makeMultipartFormDataPayload(values)
 
 	request := &APIRequest{
 		Method: "POST", APIMethod: method,
@@ -155,7 +133,7 @@ func ReadUpdate(request *http.Request) (update *Update, err error) {
 }
 
 func makeMultipartFormDataPayload(values map[string]io.Reader) (
-	body io.Reader, contentType string, err error) {
+	body io.Reader, contentType string) {
 	var closeStack []interface{}
 	defer safeClose(closeStack)()
 
@@ -168,18 +146,15 @@ func makeMultipartFormDataPayload(values map[string]io.Reader) (
 
 		switch in := reader.(type) {
 		case *os.File:
-			if fieldWriter, err = writer.CreateFormFile(field, in.Name()); err != nil {
-				return
-			}
+			// ignoring errors due to very hard and complicated way of their
+			// producing. Note, there still can be an issue, but on the present moment
+			// (an initial version) the risks are counted as insignificant.
+			fieldWriter, _ = writer.CreateFormFile(field, in.Name())
 		default:
-			if fieldWriter, err = writer.CreateFormField(field); err != nil {
-				return
-			}
+			fieldWriter, _ = writer.CreateFormField(field)
 		}
-		if _, err = io.Copy(fieldWriter, reader); err != nil {
-			return
-		}
+		_, _ = io.Copy(fieldWriter, reader)
 	}
 	_ = writer.Close()
-	return buffer, writer.FormDataContentType(), err
+	return buffer, writer.FormDataContentType()
 }

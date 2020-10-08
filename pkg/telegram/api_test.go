@@ -4,9 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
-	u "net/url"
 	"reflect"
 	"strings"
 	"testing"
@@ -19,7 +17,7 @@ type TestObject struct {
 }
 
 func TestNewAPI(t *testing.T) {
-	client := NewClient("https://localhost/telegram/api/bot1337token")
+	client := NewClient("1337token")
 	if reflect.TypeOf(client) != reflect.TypeOf(&Client{}) {
 		t.Error("types does not match")
 	}
@@ -52,29 +50,32 @@ func TestClient_WithURL(t *testing.T) {
 	}
 }
 
-func TestClient_request(t *testing.T) {
+func TestClient_Call(t *testing.T) {
 	mux, server := setup()
 	defer teardown(server)
 
-	endpoint, url := url("/getUpdates", server)
-	contentExpected := []byte(`ok`)
-	mux.HandleFunc(endpoint, func(writer http.ResponseWriter, request *http.Request) {
-		_, _ = fmt.Fprint(writer, string(contentExpected))
+	mux.HandleFunc("/getUpdates", func(writer http.ResponseWriter, request *http.Request) {
+		testClientCallMethod(t, request, "GET")
+		_, _ = fmt.Fprint(writer, `[{"id":1},{"id":2}]`)
+	})
+	client := NewClient("").WithURL(server.URL)
+
+	t.Run("failure/404", func(t *testing.T) {
+		err := client.Call(&APIRequest{Method: "404"}, nil)
+		if err == nil {
+			t.Errorf("expected error got nil instead")
+		}
 	})
 
-	client := NewClient("testToken")
-	request := client.request("GET", url, nil)
-	response, err := client.httpClient.Do(request)
+	t.Run("failure/wrong-domain", func(in *testing.T) {
+		client.httpClient = &http.Client{Timeout: 10 * time.Millisecond}
+		client.apiURL = "http://api.fake-domain"
+		err := client.Call(&APIRequest{Method: "1"}, nil)
 
-	if err != nil {
-		t.Errorf("got error: %v", err)
-	}
-	defer func() { Close(response.Body) }()
-
-	result, _ := ioutil.ReadAll(response.Body)
-	if !bytes.Equal(result, contentExpected) {
-		t.Errorf("expected: `%s`, got: `%s`", contentExpected, result)
-	}
+		if err == nil {
+			t.Errorf("expected error got nil instead")
+		}
+	})
 }
 
 func TestClient_Retrieve(t *testing.T) {
@@ -88,14 +89,11 @@ func TestClient_Retrieve(t *testing.T) {
 
 	client := NewClient("").WithURL(server.URL)
 
-	values := u.Values{"ShowOk": {"True"}}
-	reader := bytes.NewBuffer([]byte(values.Encode()))
-
 	var testObject []*TestObject
 	expected := []*TestObject{{ID: 1}, {ID: 2}}
 
 	t.Run("ok", func(in *testing.T) {
-		err := client.Retrieve("getUpdates", reader, &testObject)
+		err := client.Retrieve("getUpdates", &testObject)
 
 		if err != nil {
 			in.Errorf("got error: %v", err)
@@ -103,23 +101,6 @@ func TestClient_Retrieve(t *testing.T) {
 
 		if !reflect.DeepEqual(testObject, expected) {
 			in.Errorf("expected: `%+v`, got: `%+v`", expected, testObject)
-		}
-	})
-
-	t.Run("failure/404", func(t *testing.T) {
-		err := client.Retrieve("404", nil, nil)
-		if err == nil {
-			t.Errorf("expected error got nil instead")
-		}
-	})
-
-	t.Run("failure/wrong-domain", func(in *testing.T) {
-		client.httpClient = &http.Client{Timeout: 10 * time.Millisecond}
-		client.apiURL = "http://api.fake-domain"
-		err := client.Retrieve("1", nil, nil)
-
-		if err == nil {
-			t.Errorf("expected error got nil instead")
 		}
 	})
 }
@@ -137,9 +118,9 @@ func TestClient_Upload(t *testing.T) {
 	t.Run("ok", func(in *testing.T) {
 		client := NewClient("").WithURL(server.URL)
 		message, err := client.Upload(SendVoice, map[string]io.Reader{
-			"voice": strings.NewReader("fake voice content"),
-			"chat_id": strings.NewReader("1337"),
-			"caption": strings.NewReader("I am Duke!"),
+			"voice":    strings.NewReader("fake voice content"),
+			"chat_id":  strings.NewReader("1337"),
+			"caption":  strings.NewReader("I am Duke!"),
 			"duration": strings.NewReader("2"),
 		})
 
@@ -160,87 +141,50 @@ func TestClient_Upload(t *testing.T) {
 	})
 }
 
+func TestReadUpdate(t *testing.T) {
+	content := mustReadFile(testInlineQueryFile)
+	body := bytes.NewBuffer(content)
+	request, _ := http.NewRequest("GET", "http://localhost/", body)
+	update, err := ReadUpdate(request)
 
-// Testing 404s of Retrieve method
-func TestClient_404s(t *testing.T) {
-	_, server := setup()
-	defer teardown(server)
-	client := NewClient(server.URL)
-
-	for _, entry := range []struct {
-		name   string
-		method interface{}
-	}{
-		{"Retrieve", client.Retrieve},
-	} {
-		t.Run(entry.name, func(in *testing.T) {
-			var err error
-			switch entry.name {
-			case "Retrieve":
-				err = entry.method.(func(string, io.Reader, interface{}) error)("/404", nil, nil)
-			}
-
-			if err == nil {
-				in.Errorf("expected error, got nil instead.")
-			}
-		})
+	expected := &Update{
+		ID: 292124505,
+		InlineQuery: &InlineQuery{
+			ID: "600597106931592670",
+			From: &From{
+				ID:           1337,
+				IsBot:        false,
+				FirstName:    "Nickolas",
+				LastName:     "F.",
+				Username:     "nickolasfox",
+				LanguageCode: "ru",
+			},
+			Query:  "groovy",
+			Offset: "",
+		},
 	}
-}
 
-// Testing timeouts issues of Retrieve  method
-func TestClient_Timeouts(t *testing.T) {
-	_, server := setup()
-	defer teardown(server)
-	client := NewClient(server.URL)
-	client.httpClient = &http.Client{Timeout: 10 * time.Millisecond}
-
-	for _, entry := range []struct {
-		name   string
-		method interface{}
-	}{
-		{"Retrieve", client.Retrieve},
-	} {
-		t.Run(entry.name, func(in *testing.T) {
-			var err error
-			switch entry.name {
-			case "Retrieve":
-				err = entry.method.(func(string, io.Reader, interface{}) error)("1", nil, nil)
-			}
-
-			if err == nil {
-				t.Errorf("expected error got nil instead")
-			}
-		})
+	if err != nil {
+		t.Errorf("got error: %v", err)
 	}
-}
-
-func TestClient_updateRequest(t *testing.T) {
-	t.Run("query", func(in *testing.T) {
-		client := NewClient("")
-		request := client.request("GET", "http://localhost:8000/", nil)
-		query := u.Values{}
-		query.Set("test", "1337")
-		client.updateRequest(&APIRequest{Query: query.Encode()}, request)
-
-		result := request.URL.Query()
-		if !reflect.DeepEqual(query, result) {
-			in.Errorf("query does not match: `%v` != `%v`", query, result)
-		}
-	})
+	if !reflect.DeepEqual(update, expected) {
+		t.Errorf("\nexp: `%v`\ngot: %v", expected, update)
+	}
 }
 
 func Test_makeMultipartFormDataRequest(t *testing.T) {
 	t.Run("ok", func(in *testing.T) {
 		fd := mustOpen(testVoiceFile)
-		_, _,  err := makeMultipartFormDataPayload(map[string]io.Reader{
-			"voice": fd,
-			"chat_id": strings.NewReader("1337"),
-			"caption": strings.NewReader("I am Duke!"),
+		_, contentType := makeMultipartFormDataPayload(map[string]io.Reader{
+			"voice":    fd,
+			"chat_id":  strings.NewReader("1337"),
+			"caption":  strings.NewReader("I am Duke!"),
 			"duration": strings.NewReader("2"),
 		})
 
-		if err != nil {
-			in.Errorf("got error: %v", err)
+		expected := "multipart/form-data; boundary="
+		if strings.Contains(expected, contentType) {
+			in.Errorf("expected: `%v` hasn't been found in: `%v`", expected, contentType)
 		}
 	})
 }

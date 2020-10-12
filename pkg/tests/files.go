@@ -1,11 +1,15 @@
 package tests
 
 import (
+	"io/ioutil"
 	"log"
 	"os"
 )
 
-func void() {}
+// noop function
+func void() {
+	return
+}
 
 // OpenFile opens a file and returns its descriptor and callback function which
 // closes file. callback function has to be used in defer instruction
@@ -19,4 +23,12 @@ func OpenFile(filename string) (*os.File, func()) {
 	return fd, func() {
 		_ = fd.Close()
 	}
+}
+
+func MustReadFile(filename string) (content []byte) {
+	var err error
+	if content, err = ioutil.ReadFile(filename); err == nil {
+		return content
+	}
+	panic(err)
 }

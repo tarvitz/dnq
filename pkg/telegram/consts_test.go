@@ -2,9 +2,7 @@ package telegram
 
 const (
 	// resources
-	testVoiceFile     = "../ogg/resources/opus-headers-only.ogg"
-	testConfigFile    = "resources/config.yaml"
-	testBadConfigFile = "resources/bad-config.yaml"
+	testVoiceFile = "../ogg/resources/opus-headers-only.ogg"
 
 	// requests
 	testInlineQueryFile = "resources/inline-query.json"

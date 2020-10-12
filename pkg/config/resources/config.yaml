@@ -1,4 +1,5 @@
 #: ids has been cut intentionally
+admin-token: thisIsSecret
 quotes:
 - id: AwACAgIAAxkDAAMRX3
   caption: "Come get some!"

@@ -13,7 +13,7 @@ var (
 
 	// codecs
 	codecHeaderOpus   = []byte("OpusHead")
-	codecHeaderVorbis = []byte{'v', 'o', 'r', 'b', 'i', 's'}
+	codecHeaderVorbis = []byte("vorbis")
 )
 
 type Segment []byte

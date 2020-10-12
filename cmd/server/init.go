@@ -15,7 +15,6 @@ var (
 
 func init() {
 	http.Handle("/", Default())
-	http.Handle("/echo", Echo())
 	http.Handle("/inline", Inline())
 	http.Handle("/reload", Reload())
 	http.Handle("/metrics", promhttp.Handler())

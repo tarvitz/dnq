@@ -1,3 +1,4 @@
+admin-token: thisIsASecret
 quotes:
 - id: "AwACAgIAAxkDAAMRX3J5RTS6ijieWbCFrX68h8-o4ZoAAg8HAAKguZhLPoXn4iWWE2QbBA"
   caption: "Come get some!"
@@ -122,3 +123,24 @@ quotes:
   - good
   - me
 
+- id: AwACAgIAAxkDAAMrX3-bIz40rY9LvYBEw7_IsYZg8GUAAgkIAAK-HQFIXotTjdYFP5wbBA
+  caption: "Damn, I'm looking good!"
+  matches:
+  - damn
+  - good
+
+- id: AwACAgIAAxkDAAMuX4AxZqaxDsbH84jC4K5GOEiYGA0AAmsIAAK-HQFIZUXemmQ-EOsbBA
+  caption: "Ha-ha-ha-ha!"
+  matches:
+  - haha
+  - ha-ha
+
+- id: AwACAgIAAxkDAAMvX4BUFSiffYWnBDeaRjuo0hDj4EMAArgIAAK-HQlInnoNp96JvRobBA
+  caption: What a mess!
+  matches:
+  - mess
+
+- id: AwACAgIAAxkDAAMzX4ICDLk-BdYO1ce_sz0Fdy9o-ngAAngKAAKmRBFI0AdUqZbbDLsbBA
+  caption: My job is to kick ass
+  matches:
+  - job

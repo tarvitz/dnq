@@ -6,6 +6,5 @@ require (
 	github.com/jessevdk/go-flags v1.4.0
 	github.com/prometheus/client_golang v1.7.1
 	golang.org/x/net v0.0.0-20200927032502-5d4f70055728
-	gopkg.in/yaml.v2 v2.2.8
 	sigs.k8s.io/yaml v1.2.0
 )

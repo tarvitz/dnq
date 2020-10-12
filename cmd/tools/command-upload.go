@@ -3,14 +3,13 @@ package tools
 import (
 	"encoding/json"
 	"fmt"
-
-	"gopkg.in/yaml.v2"
 	"io"
 	"os"
 	"strings"
 
 	"github.com/jessevdk/go-flags"
 	"github.com/tarvitz/dnq/pkg/ogg"
+	"sigs.k8s.io/yaml"
 
 	"github.com/tarvitz/dnq/cmd/common"
 	"github.com/tarvitz/dnq/pkg/telegram"
@@ -27,7 +26,7 @@ type UploadCommand struct {
 	ChatID  string   `short:"C" long:"chat-id" env:"DNQ_CHAT_ID" required:"true" description:"chat id: unique int id or @username."`
 	Caption string   `short:"c" long:"caption" description:"set caption for the uploaded file."`
 	Matches []string `short:"m" long:"matches" description:"a keyword matching list"`
-	Output  string   `short:"o" long:"output" choice:"config" choice:"json" default:"config" env:"DNQ_OUTPUT" description:"output time once file is uploaded."`
+	Output  string   `short:"o" long:"output" choice:"config" choice:"json" choice:"yaml" default:"config" env:"DNQ_OUTPUT" description:"output time once file is uploaded."`
 }
 
 func (command *UploadCommand) print(message *telegram.Message) {
@@ -35,6 +34,8 @@ func (command *UploadCommand) print(message *telegram.Message) {
 	switch command.Output {
 	case "json":
 		content, _ = json.MarshalIndent(message, "", "    ")
+	case "yaml":
+		content, _ = yaml.Marshal(message)
 	case "config":
 		quote := &telegram.Quote{
 			ID:      message.Voice.FileID,
@@ -51,7 +52,7 @@ func (command *UploadCommand) print(message *telegram.Message) {
 
 func (command *UploadCommand) upload(file *os.File) (err error) {
 	var message *telegram.Message
-	client := telegram.NewClient(command.Auth.Token)
+	client := command.GetClient()
 	message, err = client.Upload(telegram.SendVoice, map[string]io.Reader{
 		"voice":   file,
 		"chat_id": strings.NewReader(command.ChatID),
@@ -75,11 +76,8 @@ func (command *UploadCommand) Execute(_ []string) (err error) {
 		_, _ = fd.Seek(0, 0)
 		err = command.upload(fd)
 	} else {
-		fmt.Printf("you can't downloaded this file")
+		err = fmt.Errorf("you can't downloaded this file")
+		fmt.Printf("%v\n", err)
 	}
 	return
-}
-
-func Close(closer io.Closer) {
-	_ = closer.Close()
 }

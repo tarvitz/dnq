@@ -1,10 +1,11 @@
 package server
 
 import (
-	"encoding/json"
 	"fmt"
-	"github.com/tarvitz/dnq/pkg/telegram"
 	"net/http"
+
+	"github.com/tarvitz/dnq/pkg/config"
+	"github.com/tarvitz/dnq/pkg/telegram"
 )
 
 func Default() http.HandlerFunc {
@@ -13,46 +14,46 @@ func Default() http.HandlerFunc {
 	}
 }
 
-func Echo() http.HandlerFunc {
-	return func(writer http.ResponseWriter, request *http.Request) {
-		_, _ = fmt.Fprintf(writer, "ok")
-	}
-}
-
 func Inline() http.HandlerFunc {
-	return inline
-}
+	return func(writer http.ResponseWriter, request *http.Request) {
+		var (
+			update *telegram.Update
+			err    error
+		)
+		writer.WriteHeader(http.StatusOK)
 
-func inline(writer http.ResponseWriter, request *http.Request) {
-	var (
-		update *telegram.Update
-		err    error
-	)
-	writer.WriteHeader(http.StatusOK)
+		update, err = telegram.ReadUpdate(request)
+		if err != nil {
+			fmt.Printf("err: %v\n", err)
+			return
+		}
 
-	update, err = telegram.ReadUpdate(request)
-	if err != nil {
-		fmt.Printf("err: %v\n", err)
-		return
-	}
-	client := telegram.NewClient(cmd.Token)
-	err = client.Inlines.AnswerInlineQuery(update)
-	if err != nil {
-		fmt.Printf("err: %v\n", err)
+		client := cmd.GetClient()
+		err = client.Inlines.AnswerInlineQuery(update)
+		// well, telegram does not require a payload in answer,
+		// thus far it just returns a simple json object
+		if err == nil {
+			_, _ = fmt.Fprintf(writer, `{"status": "ok"}`)
+		}
 	}
 }
 
 func Reload() http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
-		err := telegram.ReadQuotes(string(cmd.Config))
-		if err != nil {
-			writer.WriteHeader(400)
-			content, _ := json.Marshal(map[string]string{
-				"ok":  "false",
-				"err": err.Error(),
-			})
-			_, _ = writer.Write(content)
+		var err error
+		if cmd.config, err = config.ReadConfig(string(cmd.Config)); err != nil {
+			writer.WriteHeader(http.StatusInternalServerError)
+			_, _ = fmt.Fprintf(writer, `{"status": "oops, can't reload config file"}`)
+			return
 		}
-		_, _ = fmt.Fprintf(writer, `{"status": "ok"}`)
+
+		if hasAdminToken(request, cmd.config.AdminToken) {
+			fmt.Printf("Quotes reloaded: %d\n", len(cmd.config.Quotes))
+			telegram.SetQuotes(cmd.config.Quotes)
+			_, _ = fmt.Fprintf(writer, `{"status": "ok"}`)
+		} else {
+			writer.WriteHeader(http.StatusForbidden)
+			_, _ = fmt.Fprintf(writer, `{"status": "forbidden"}`)
+		}
 	}
 }

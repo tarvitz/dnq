@@ -7,3 +7,4 @@ bin
 .idea
 go.sum
 resources/server.*
+production.pem

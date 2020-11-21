@@ -2,6 +2,7 @@ package config
 
 import (
 	"io/ioutil"
+	"math/rand"
 	"os"
 
 	"sigs.k8s.io/yaml"
@@ -32,4 +33,17 @@ func ReadConfig(filename string) (config *Config, err error) {
 		return
 	}
 	return
+}
+
+func (config *Config) RandomQuote() (quote *telegram.Quote) {
+	if len(config.Quotes) > 0 {
+		idx := rand.Int() % len(config.Quotes)
+		return config.Quotes[idx]
+	}
+	//: fallback quote
+	return &telegram.Quote{
+		ID:      "AwACAgIAAxkDAAMWX3okXL1AZ-aOQTpL2t-7tExt2YIAArMIAAJgG9BLmWJEVGtI5hwbBA",
+		Caption: "What the ..?",
+		Matches: nil,
+	}
 }

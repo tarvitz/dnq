@@ -31,6 +31,7 @@ type Client struct {
 
 	// Services
 	Inlines *InlineService
+	Commons *CommonService
 }
 
 // WithURL sets url to send bot api requests to. It's helpful in testing.
@@ -48,6 +49,7 @@ func NewClient(token string) *Client {
 		httpClient: &http.Client{Jar: jar},
 	}
 	client.Inlines = &InlineService{client: client}
+	client.Commons = &CommonService{client: client}
 	return client
 }
 

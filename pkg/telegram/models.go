@@ -24,15 +24,35 @@ type Message struct {
 	From *From `json:"from"`
 	Chat *From `json:"chat"`
 	// todo: replace with serializable date (some other day :)
-	Date int `json:"date"`
+	Date int    `json:"date"`
+	Text string `json:"text,omitempty"`
 
 	// Optional fields
 	Voice *Voice `json:"voice,omitempty"`
 }
 
+type UpdateType int
+
+const (
+	UpdateTypeUnknown UpdateType = iota
+	UpdateTypeInline
+	UpdateTypeMessage
+)
+
 type Update struct {
 	ID          int          `json:"update_id"`
+	Message     *Message     `json:"message,omitempty"`
 	InlineQuery *InlineQuery `json:"inline_query,omitempty"`
+}
+
+func (update *Update) Type() UpdateType {
+	if update.Message != nil {
+		return UpdateTypeMessage
+	}
+	if update.InlineQuery != nil {
+		return UpdateTypeInline
+	}
+	return UpdateTypeUnknown
 }
 
 type InlineQuery struct {

@@ -3,9 +3,16 @@ package server
 import (
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/tarvitz/dnq/pkg/config"
 	"github.com/tarvitz/dnq/pkg/telegram"
+)
+
+const (
+	//: help voice message (already preloaded)
+	helpVoiceID = "AwACAgIAAxkDAAM1X4TWF69s2eFdU3INm1VZdlGQHcwAAv0KAAJl8ShIiwo4VB6W5hobBA"
+	statusOk    = `{"status": "ok"}`
 )
 
 func Default() http.HandlerFunc {
@@ -14,7 +21,9 @@ func Default() http.HandlerFunc {
 	}
 }
 
-func Inline() http.HandlerFunc {
+// Mast is like a telegraph mast that receives messages from telegram
+// and responds back.
+func Mast() http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
 		var (
 			update *telegram.Update
@@ -27,14 +36,53 @@ func Inline() http.HandlerFunc {
 			fmt.Printf("err: %v\n", err)
 			return
 		}
+		fmt.Printf("%v\n", update)
 
-		client := cmd.GetClient()
-		err = client.Inlines.AnswerInlineQuery(update)
+		switch update.Type() {
+		case telegram.UpdateTypeInline:
+			inline(writer, update)
+		case telegram.UpdateTypeMessage:
+			message(writer, update)
+		default:
+			fmt.Printf("unknown type of message, skipping \n")
+		}
+	}
+}
+
+func inline(writer http.ResponseWriter, update *telegram.Update) {
+	var err error
+	client := cmd.GetClient()
+
+	if err = client.Inlines.AnswerInlineQuery(update); err == nil {
 		// well, telegram does not require a payload in answer,
 		// thus far it just returns a simple json object
-		if err == nil {
-			_, _ = fmt.Fprintf(writer, `{"status": "ok"}`)
-		}
+		_, _ = fmt.Fprintf(writer, statusOk)
+	}
+}
+
+func message(writer http.ResponseWriter, update *telegram.Update) {
+	var err error
+	client := cmd.GetClient()
+	text := strings.ToLower(update.Message.Text)
+
+	quote := cmd.config.RandomQuote()
+	voice := &telegram.VoiceMessage{
+		ChatID:  update.Message.From.ID,
+		Voice:   quote.ID,
+		Caption: &quote.Caption,
+	}
+	if strings.HasPrefix(text, "/help") {
+
+		voice.Voice = helpVoiceID
+		caption := "Help me! Help me, ehehehe"
+		voice.Caption = &caption
+	}
+	err = client.Commons.SendVoice(voice)
+
+	if err == nil {
+		_, _ = fmt.Fprintf(writer, statusOk)
+	} else {
+		fmt.Printf("err: %v\n", err)
 	}
 }
 

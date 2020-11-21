@@ -94,7 +94,7 @@ func TestInline(t *testing.T) {
 		cmd.SetClient(client.WithURL(server.URL))
 
 		buffer := tests.NewHTTPBuffer()
-		Inline()(buffer, request)
+		Mast()(buffer, request)
 
 		expected := `{"status": "ok"}`
 		if expected != buffer.String() {
@@ -110,7 +110,7 @@ func TestInline(t *testing.T) {
 		cmd.SetClient(client.WithURL(server.URL))
 
 		buffer := tests.NewHTTPBuffer()
-		Inline()(buffer, request)
+		Mast()(buffer, request)
 
 		expected := ``
 		if expected != buffer.String() {

@@ -25,6 +25,8 @@ func OpenFile(filename string) (*os.File, func()) {
 	}
 }
 
+// MustReadFile reads file content and returns it as slice of byte, otherwise
+// it panics
 func MustReadFile(filename string) (content []byte) {
 	var err error
 	if content, err = ioutil.ReadFile(filename); err == nil {

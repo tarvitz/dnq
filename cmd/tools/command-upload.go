@@ -15,10 +15,13 @@ import (
 	"github.com/tarvitz/dnq/pkg/telegram"
 )
 
+// UploadPositional positional arguments for assets uploading
 type UploadPositional struct {
 	Filename flags.Filename `positional-arg-name:"file" env:"DNQ_UPLOAD_FILE" description:"upload file name."`
 }
 
+// UploadCommand is useful to upload voice messages encoded with OPUS to the Telegram
+// and receive required configuration for quotes.
 type UploadCommand struct {
 	common.Auth      `group:"auth options"`
 	UploadPositional `positional-args:"yes" required:"yes"`
@@ -65,6 +68,7 @@ func (command *UploadCommand) upload(file *os.File) (err error) {
 	return
 }
 
+// Execute +
 func (command *UploadCommand) Execute(_ []string) (err error) {
 	var fd *os.File
 	if fd, err = os.Open(string(command.Filename)); err != nil {

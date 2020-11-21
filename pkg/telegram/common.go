@@ -5,10 +5,12 @@ import (
 	"encoding/json"
 )
 
+// CommonService is served for common telegram methods
 type CommonService struct {
 	client *Client
 }
 
+// VoiceMessage processes telegram voice messages
 type VoiceMessage struct {
 	ChatID              int     `json:"chat_id"`
 	Voice               string  `json:"voice"`
@@ -19,6 +21,7 @@ type VoiceMessage struct {
 	ReplyToMessageID    *int    `json:"reply_to_message_id,omitempty"`
 }
 
+// SendVoice sends a voice message to the client
 func (service *CommonService) SendVoice(message *VoiceMessage) (err error) {
 	content, _ := json.Marshal(message)
 	buffer := bytes.NewBuffer(content)

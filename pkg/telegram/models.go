@@ -4,11 +4,13 @@ import (
 	"strings"
 )
 
+// APIResponse +
 type APIResponse struct {
 	Status  bool     `json:"status"`
 	Message *Message `json:"result"`
 }
 
+// From +
 type From struct {
 	ID           int    `json:"id"`
 	IsBot        bool   `json:"is_bot,omitempty"`
@@ -19,6 +21,7 @@ type From struct {
 	LanguageCode string `json:"language_code,omitempty"`
 }
 
+// Message keeps telegram message contents
 type Message struct {
 	ID   int   `json:"message_id"`
 	From *From `json:"from"`
@@ -31,20 +34,28 @@ type Message struct {
 	Voice *Voice `json:"voice,omitempty"`
 }
 
+// UpdateType keeps an internal type for different telegram message types like
+// InlineQuery, VoiceMessage and so forth.
 type UpdateType int
 
+// Exportable commands
 const (
 	UpdateTypeUnknown UpdateType = iota
 	UpdateTypeInline
 	UpdateTypeMessage
 )
 
+// Update instance that comes from telegram
+// See also https://core.telegram.org/bots/api#update
 type Update struct {
 	ID          int          `json:"update_id"`
 	Message     *Message     `json:"message,omitempty"`
 	InlineQuery *InlineQuery `json:"inline_query,omitempty"`
 }
 
+// Type returns update instance type. In short telegram sends only
+// one type of update instance with message, inline-query or others
+// see also https://core.telegram.org/bots/api#setwebhook allowed_updates
 func (update *Update) Type() UpdateType {
 	if update.Message != nil {
 		return UpdateTypeMessage
@@ -55,6 +66,7 @@ func (update *Update) Type() UpdateType {
 	return UpdateTypeUnknown
 }
 
+// InlineQuery keeps inline query data
 type InlineQuery struct {
 	ID     string `json:"id"`
 	From   *From  `json:"from"`
@@ -62,6 +74,7 @@ type InlineQuery struct {
 	Offset string `json:"offset"`
 }
 
+// Voice keeps voice message metadata
 type Voice struct {
 	Duration     int    `json:"duration"`
 	MimeType     string `json:"mime_type"`
@@ -70,25 +83,30 @@ type Voice struct {
 	FileSize     int    `json:"file_size"`
 }
 
+// AnswerInline is used to send to the client a response regarding InlineQuery
 type AnswerInline struct {
 	ID      string                `json:"inline_query_id"`
 	Results []*AnswerInlineResult `json:"results"`
 }
 
+// AnswerInlineType keeps different types of InlineQuery messages
 type AnswerInlineType string
 
+// Exportable consts
 const (
 	AnswerInlineTypeVoice AnswerInlineType = "voice"
 )
 
+// AnswerInlineResult +
 type AnswerInlineResult struct {
 	Type        AnswerInlineType `json:"type"`
 	ID          string           `json:"id"`
-	VoiceFileId *string          `json:"voice_file_id,omitempty"`
+	VoiceFileID *string          `json:"voice_file_id,omitempty"`
 	Title       string           `json:"title"`
 	Caption     string           `json:"caption"`
 }
 
+// NewAnswerInline returns valid answer inline result
 func NewAnswerInline(update *Update) (result *AnswerInline) {
 	result = new(AnswerInline)
 	result.ID = update.InlineQuery.ID
@@ -98,6 +116,8 @@ func NewAnswerInline(update *Update) (result *AnswerInline) {
 	return result
 }
 
+// NewInlineQueryResultCachedVoice returns a voice message to the telegram
+// (actually does not send any files to telegram, but use already uploaded)
 func NewInlineQueryResultCachedVoice(update *Update) (results []*AnswerInlineResult) {
 	in := strings.ToLower(update.InlineQuery.Query)
 	quotes, found := Quotes[in]
@@ -111,7 +131,7 @@ func NewInlineQueryResultCachedVoice(update *Update) (results []*AnswerInlineRes
 			Type:        AnswerInlineTypeVoice,
 			Caption:     quote.Caption,
 			Title:       quote.Caption,
-			VoiceFileId: &quote.ID,
+			VoiceFileID: &quote.ID,
 		}
 		results = append(results, result)
 	}

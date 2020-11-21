@@ -36,8 +36,8 @@ func TestCommand_Execute(t *testing.T) {
 
 func TestCommand_initServer(t *testing.T) {
 	//: just register a call
-	origHttpServer := httpServer
-	defer func() { httpServer = origHttpServer }()
+	origHTTPServer := httpServer
+	defer func() { httpServer = origHTTPServer }()
 
 	cmd := &Command{
 		Port:    1337,

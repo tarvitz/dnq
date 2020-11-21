@@ -11,8 +11,9 @@ import (
 )
 
 const (
-	testInlineRequestFile = "../../pkg/telegram/resources/inline-query.json"
-	testInlineVoiceResult = "../../pkg/telegram/resources/voice.json"
+	testInlineRequestFile  = "../../pkg/telegram/resources/inline-query.json"
+	testInlineVoiceResult  = "../../pkg/telegram/resources/voice.json"
+	testMessageVoiceResult = "../../pkg/telegram/resources/message.json"
 )
 
 func TestDefault(t *testing.T) {
@@ -76,7 +77,7 @@ func TestReload(t *testing.T) {
 	})
 }
 
-func TestInline(t *testing.T) {
+func TestMast(t *testing.T) {
 	client := telegram.NewClient("")
 	originCmd := cmd
 	defer func() { cmd = originCmd }()
@@ -85,10 +86,27 @@ func TestInline(t *testing.T) {
 	payload := bytes.NewBuffer(tests.MustReadFile(testInlineRequestFile))
 	request, _ := http.NewRequest("POST", "http://localhost", payload)
 
-	t.Run("ok", func(in *testing.T) {
+	t.Run("ok/inline", func(in *testing.T) {
 		server, rollback := tests.NewHTTPTestServer(tests.Route{
 			//: all queries to respond with ok
 			"/": &tests.Response{Contents: tests.MustReadFile(testInlineVoiceResult)},
+		})
+		defer rollback()
+		cmd.SetClient(client.WithURL(server.URL))
+
+		buffer := tests.NewHTTPBuffer()
+		Mast()(buffer, request)
+
+		expected := `{"status": "ok"}`
+		if expected != buffer.String() {
+			in.Errorf("expected: `%v`, got: `%v`", expected, buffer.String())
+		}
+	})
+
+	t.Run("ok/message", func(in *testing.T) {
+		server, rollback := tests.NewHTTPTestServer(tests.Route{
+			//: all queries to respond with ok
+			"/": &tests.Response{Contents: tests.MustReadFile(testMessageVoiceResult)},
 		})
 		defer rollback()
 		cmd.SetClient(client.WithURL(server.URL))

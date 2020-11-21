@@ -15,6 +15,7 @@ const (
 	statusOk    = `{"status": "ok"}`
 )
 
+// Default is a default http response handler responding with HTTP 200 OK
 func Default() http.HandlerFunc {
 	return func(writer http.ResponseWriter, _ *http.Request) {
 		_, _ = fmt.Fprintf(writer, "ok")
@@ -36,7 +37,6 @@ func Mast() http.HandlerFunc {
 			fmt.Printf("err: %v\n", err)
 			return
 		}
-		fmt.Printf("%v\n", update)
 
 		switch update.Type() {
 		case telegram.UpdateTypeInline:
@@ -86,6 +86,8 @@ func message(writer http.ResponseWriter, update *telegram.Update) {
 	}
 }
 
+// Reload reloads quotes configuration, this is useful to reload quotes without
+// restarting a server
 func Reload() http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
 		var err error

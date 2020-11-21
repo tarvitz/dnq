@@ -1,1 +1,3 @@
+cmd/consts.go
+cmd/init.go
 cmd/main.go

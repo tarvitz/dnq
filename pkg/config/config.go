@@ -10,6 +10,11 @@ import (
 	"github.com/tarvitz/dnq/pkg/telegram"
 )
 
+const (
+	wtfQuoteID = "AwACAgIAAxkDAAMWX3okXL1AZ-aOQTpL2t-7tExt2YIAArMIAAJgG9BLmWJEVGtI5hwbBA"
+)
+
+// Config stores DNQ configuration assets, quotes, tokens and so forth
 type Config struct {
 	// Administrator's token to perform s2s queries from administrator privileges
 	AdminToken string `json:"admin-token"`
@@ -35,6 +40,8 @@ func ReadConfig(filename string) (config *Config, err error) {
 	return
 }
 
+// RandomQuote returns a random quote from the quotes slice, otherwise
+// returns pre-set one.
 func (config *Config) RandomQuote() (quote *telegram.Quote) {
 	if len(config.Quotes) > 0 {
 		idx := rand.Int() % len(config.Quotes)
@@ -42,7 +49,7 @@ func (config *Config) RandomQuote() (quote *telegram.Quote) {
 	}
 	//: fallback quote
 	return &telegram.Quote{
-		ID:      "AwACAgIAAxkDAAMWX3okXL1AZ-aOQTpL2t-7tExt2YIAArMIAAJgG9BLmWJEVGtI5hwbBA",
+		ID:      wtfQuoteID,
 		Caption: "What the ..?",
 		Matches: nil,
 	}

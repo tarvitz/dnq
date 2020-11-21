@@ -16,8 +16,10 @@ var (
 	codecHeaderVorbis = []byte("vorbis")
 )
 
+// Segment is for ogg page segment
 type Segment []byte
 
+// Metadata is ogg page metadata item
 type Metadata struct {
 	CapturePattern        [4]byte
 	Version               int8
@@ -29,11 +31,13 @@ type Metadata struct {
 	PageSegments          uint8
 }
 
+// Page keeps ogg page info
 type Page struct {
 	Metadata *Metadata
 	Segments []Segment
 }
 
+// Read reads binary chuck from the reader into metadata fields
 func (m *Metadata) Read(reader io.Reader) (err error) {
 	err = b.Read(reader, b.LittleEndian, m)
 	return
